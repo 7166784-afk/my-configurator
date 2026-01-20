@@ -2,87 +2,145 @@
 <html lang="he" dir="rtl">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>קונפיגורטור אונליין</title>
     <script src="data.js"></script>
 
     <style>
-        body, html { margin: 0; padding: 0; background: #000; font-family: 'Segoe UI', system-ui, sans-serif; overflow-x: hidden; color: white; }
-        
-        #app-container { position: relative; width: 100%; max-width: 600px; margin: 0 auto; background: #000; }
+        body, html { 
+            margin: 0; padding: 0; background: #000; 
+            font-family: 'Segoe UI', sans-serif; color: white; 
+        }
 
-        /* הצגת השכבות */
+        /* מיכל ראשי - במחשב הוא יתפרס על המסך, בנייד יהיה מותאם */
+        #main-wrapper {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            width: 100%;
+            max-width: 1200px; /* רוחב נוח למחשב */
+            margin: 0 auto;
+            padding-bottom: 50px;
+        }
+
+        /* מיכל התמונה */
+        #app-container { 
+            position: relative; 
+            width: 100%; 
+            margin-top: 20px;
+            box-shadow: 0 0 20px rgba(176, 141, 103, 0.2);
+            line-height: 0;
+        }
+
         .layer { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
         #bg-image { position: relative; display: block; width: 100%; z-index: 1; opacity: 1; }
         #img-base { z-index: 2; } #img-mashrabiya { z-index: 3; } #img-profile { z-index: 4; }
 
         /* תצוגת מחיר */
         #price-display-mobile { 
-            display: none; font-size: 24px; font-weight: bold; color: #b08d67; 
-            padding: 15px; text-align: center; background: #111; border-bottom: 1px solid #333;
+            font-size: 32px; font-weight: bold; color: #b08d67; 
+            padding: 30px 0; text-align: center; width: 100%;
         }
 
-        /* כפתורי שליטה בנייד */
-        .mobile-controls { display: flex; flex-direction: column; gap: 12px; padding: 20px; }
+        /* כפתורי שליטה - במחשב יהיו בשורה אחת, בנייד אחד מתחת לשני */
+        .mobile-controls { 
+            display: flex; 
+            flex-wrap: wrap;
+            justify-content: center;
+            gap: 15px; 
+            width: 90%;
+        }
+        
         .mobile-btn { 
-            padding: 16px; background: #b08d67; color: white; border: none; 
-            border-radius: 8px; font-size: 18px; font-weight: bold; cursor: pointer; 
+            flex: 1;
+            min-width: 200px;
+            padding: 20px; 
+            background: #b08d67; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 18px; 
+            font-weight: bold; 
+            cursor: pointer;
+            transition: transform 0.2s;
         }
+        .mobile-btn:hover { transform: scale(1.02); }
+
         #order-btn-mobile { 
-            display: none; width: 100%; padding: 18px; background: #28a745; 
-            color: white; border: none; border-radius: 8px; font-size: 20px; 
-            font-weight: bold; margin-top: 10px; 
+            display: none; 
+            width: 100%; 
+            max-width: 400px;
+            padding: 22px; 
+            background: #28a745; 
+            color: white; 
+            border: none; 
+            border-radius: 8px; 
+            font-size: 22px; 
+            font-weight: bold; 
+            margin-top: 20px;
         }
 
-        /* תפריטי בחירה (Dropdown) כמודאל במרכז המסך */
+        /* תפריטי בחירה (מודאל) */
         .dropdown {
-            display: none; position: fixed; top: 50%; left: 50%; transform: translate(-50%, -50%);
-            background: white; z-index: 100; width: 85%; max-height: 400px; 
-            overflow-y: auto; border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+            display: none; position: fixed; top: 50%; left: 50%; 
+            transform: translate(-50%, -50%); background: #fff; 
+            z-index: 1000; width: 90%; max-width: 400px; 
+            max-height: 70vh; overflow-y: auto; border-radius: 12px;
         }
         .show { display: block !important; }
         .dropdown button { 
-            display: block; width: 100%; padding: 18px; text-align: right; 
+            display: block; width: 100%; padding: 20px; text-align: right; 
             border: none; background: none; border-bottom: 1px solid #eee; 
-            font-size: 16px; font-weight: bold; color: #000; 
+            font-size: 18px; font-weight: bold; color: #333; cursor: pointer;
         }
 
         /* חלונית פרטי לקוח */
         #contact-modal { 
-            display: none; position: fixed; z-index: 200; left: 0; top: 0; 
-            width: 100%; height: 100%; background: rgba(0,0,0,0.95); 
+            display: none; position: fixed; z-index: 2000; 
+            left: 0; top: 0; width: 100%; height: 100%; 
+            background: rgba(0,0,0,0.9); 
         }
         .modal-content { 
-            background: #1a1a1a; color: white; margin: 15% auto; padding: 25px; 
-            width: 85%; border-radius: 15px; text-align: center; border: 1px solid #b08d67; 
+            background: #1a1a1a; margin: 5% auto; padding: 30px; 
+            width: 90%; max-width: 500px; border-radius: 20px; text-align: center; 
+            border: 1px solid #b08d67;
         }
-        .modal-content h2 { color: #b08d67; margin-top: 0; }
         .modal-content input { 
-            width: 90%; padding: 14px; margin: 10px 0; border: 1px solid #444; 
-            background: #000; color: white; border-radius: 8px; font-size: 16px; text-align: center; 
+            width: 90%; padding: 15px; margin: 10px 0; 
+            border: 1px solid #444; background: #000; color: #fff; 
+            border-radius: 10px; font-size: 18px; text-align: center;
         }
         
-        /* שכבת כיסוי כשמניו פתוח */
-        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 50; }
+        #overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); z-index: 500; }
+
+        /* התאמות ספציפיות למסכים קטנים (טלפונים) */
+        @media (max-width: 768px) {
+            .mobile-btn { width: 100%; flex: none; }
+            #price-display-mobile { font-size: 24px; }
+            .modal-content { margin: 15% auto; }
+        }
     </style>
 </head>
 <body>
 
 <div id="overlay" onclick="closeMenus()"></div>
 
-<div id="app-container">
-    <img src="background_design.png" id="bg-image">
-    <img id="img-base" class="layer" src="">
-    <img id="img-mashrabiya" class="layer" src="">
-    <img id="img-profile" class="layer" src="">
-</div>
+<div id="main-wrapper">
+    <div id="app-container">
+        <img src="background_design.png" id="bg-image">
+        <img id="img-base" class="layer" src="">
+        <img id="img-mashrabiya" class="layer" src="">
+        <img id="img-profile" class="layer" src="">
+    </div>
 
-<div id="price-display-mobile"></div>
+    <div id="price-display-mobile">נא לבחור מוצרים לצפייה במחיר</div>
 
-<div class="mobile-controls">
-    <button class="mobile-btn" onclick="toggleMenu('menu-base')">בחר בסיס</button>
-    <button class="mobile-btn" onclick="toggleMenu('menu-light')">בחר תאורה</button>
-    <button class="mobile-btn" onclick="toggleMenu('menu-mash')">בחר משרביה</button>
+    <div class="mobile-controls">
+        <button class="mobile-btn" onclick="toggleMenu('menu-base')">בחר בסיס</button>
+        <button class="mobile-btn" onclick="toggleMenu('menu-light')">בחר תאורה</button>
+        <button class="mobile-btn" onclick="toggleMenu('menu-mash')">בחר משרביה</button>
+    </div>
+    
     <button id="order-btn-mobile" onclick="openModal()">להזמנה לחץ כאן</button>
 </div>
 
@@ -92,21 +150,19 @@
 
 <div id="contact-modal">
     <div class="modal-content">
-        <h2>פרטי לקוח</h2>
-        <p>מלאו פרטים ונחזור אליכם עם הצעה סופית</p>
+        <h2 style="color:#b08d67">פרטי הזמנה</h2>
         <input type="text" id="cust-name" placeholder="שם מלא">
         <input type="tel" id="cust-phone" placeholder="מספר טלפון">
-        <input type="email" id="cust-email" placeholder="כתובת אימייל">
+        <input type="email" id="cust-email" placeholder="אימייל (אופציונלי)">
         
-        <button id="submit-btn" class="mobile-btn" style="background:#28a745; width:100%; margin-top:15px;" onclick="saveLead()">שלח פרטים</button>
-        <button onclick="closeModal()" style="color:#888; background:none; border:none; margin-top:15px; cursor:pointer; font-size: 16px;">חזור לעיצוב</button>
+        <button id="submit-btn" class="mobile-btn" style="background:#28a745; width:100%; margin-top:20px;" onclick="saveLead()">שלח נתונים</button>
+        <button onclick="closeModal()" style="color:#888; background:none; border:none; margin-top:15px; cursor:pointer;">חזור לעיצוב</button>
     </div>
 </div>
 
 <script>
     let currentPrices = { base: 0, mashrabiya: 0, profile: 0 };
     let selectedNames = { base: "לא נבחר", mashrabiya: "לא נבחר", profile: "לא נבחר" };
-    
     const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_H8agGkY_0LkD3R5VKgat1v5We7ylVLXw-9Gp2i5tx2RqqicQw-js2SuBEPzvBPxr/exec';
 
     function init() {
@@ -133,9 +189,7 @@
         const total = currentPrices.base + currentPrices.mashrabiya + currentPrices.profile;
         if (total > 0) {
             const txt = total.toLocaleString() + " ₪";
-            const priceDiv = document.getElementById('price-display-mobile');
-            priceDiv.innerText = "סה\"כ לתשלום: " + txt;
-            priceDiv.style.display = 'block';
+            document.getElementById('price-display-mobile').innerText = "סה\"כ לתשלום: " + txt;
             document.getElementById('order-btn-mobile').style.display = 'block';
         }
     }
@@ -151,39 +205,20 @@
         document.getElementById('overlay').style.display = 'none';
     }
 
-    function openModal() { 
-        closeMenus();
-        document.getElementById('contact-modal').style.display = "block"; 
-    }
-    
+    function openModal() { document.getElementById('contact-modal').style.display = "block"; }
     function closeModal() { document.getElementById('contact-modal').style.display = "none"; }
 
     async function saveLead() {
         const name = document.getElementById('cust-name').value;
         const phone = document.getElementById('cust-phone').value;
-        const email = document.getElementById('cust-email').value;
-        
         if (!name || !phone) { alert("נא למלא שם וטלפון"); return; }
-
-        const priceText = document.getElementById('price-display-mobile').innerText.replace('סה"כ לתשלום: ', '');
-        const data = { 
-            שם: name, טלפון: phone, אימייל: email, 
-            בסיס: selectedNames.base, משרביה: selectedNames.mashrabiya, תאורה: selectedNames.profile, 
-            מחיר: priceText 
-        };
-
-        const btn = document.getElementById('submit-btn');
-        btn.innerText = "שולח נתונים...";
-        btn.disabled = true;
-
+        const price = document.getElementById('price-display-mobile').innerText;
+        const data = { שם: name, טלפון: phone, אימייל: document.getElementById('cust-email').value, בסיס: selectedNames.base, משרביה: selectedNames.mashrabiya, תאורה: selectedNames.profile, מחיר: price };
         try {
             await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
-            alert("תודה! הפרטים התקבלו, נחזור אליך בהקדם.");
+            alert("תודה! הפרטים התקבלו.");
             location.reload();
-        } catch (e) {
-            alert("הנתונים נשלחו בהצלחה!");
-            location.reload();
-        }
+        } catch (e) { alert("נשלח בהצלחה!"); location.reload(); }
     }
 
     window.onload = init;
