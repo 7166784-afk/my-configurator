@@ -1,0 +1,196 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>קונפיגורטור תערוכה & אונליין</title>
+    <script src="data.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/css/index.css">
+    <script src="https://cdn.jsdelivr.net/npm/simple-keyboard@latest/build/index.min.js"></script>
+
+    <style>
+        body, html { margin: 0; padding: 0; background: #f4f4f4; font-family: sans-serif; text-align: center; }
+        
+        /* מיכל ראשי */
+        #app-container { 
+            position: relative; 
+            width: 100%; 
+            max-width: 1920px; 
+            margin: 0 auto; 
+            background: #000;
+            overflow: hidden;
+        }
+
+        /* תמונות השכבות */
+        .layer { position: absolute; top: 0; left: 0; width: 100%; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+        #bg-image { position: relative; display: block; width: 100%; z-index: 1; opacity: 1; }
+        #img-base { z-index: 2; } #img-mashrabiya { z-index: 3; } #img-profile { z-index: 4; }
+
+        /* כפתורים שקופים (לתערוכה) */
+        .touch-zone { position: absolute; z-index: 10; cursor: pointer; background: rgba(255,255,255,0); border: none; }
+        
+        /* מחיר */
+        #price-display {
+            position: absolute; z-index: 15; font-size: 4vw; font-weight: bold; color: #b08d67;
+        }
+
+        /* תפריטים */
+        .dropdown {
+            display: none; position: absolute; background: white; z-index: 20;
+            border: 1px solid #b08d67; width: 15%; box-shadow: 0px 8px 16px rgba(0,0,0,0.3);
+            max-height: 200px; overflow-y: auto;
+        }
+        .show { display: block !important; }
+        .dropdown button { width: 100%; padding: 10px; border: none; border-bottom: 1px solid #eee; background: none; cursor: pointer; text-align: right; font-weight: bold; }
+
+        /* התאמה לנייד (Mobile) */
+        @media (max-width: 768px) {
+            #app-container { height: auto; }
+            #price-display { position: relative; top: 0; left: 0; font-size: 30px; margin: 20px 0; background: #fff; padding: 10px; }
+            
+            /* בנייד - הופך את אזורי המגע לכפתורים גלויים מתחת לתמונה */
+            .mobile-controls { display: flex; flex-direction: column; gap: 10px; padding: 20px; background: #fff; }
+            .mobile-btn { padding: 15px; background: #b08d67; color: white; border: none; border-radius: 5px; font-size: 18px; font-weight: bold; }
+            
+            .touch-zone { display: none; } /* מחביא את האזורים השקופים */
+            .dropdown { position: fixed; top: 50% !important; left: 50% !important; transform: translate(-50%, -50%); width: 80%; max-height: 300px; }
+            
+            #order-btn-mobile { display: block !important; width: 90%; margin: 10px auto; padding: 20px; background: #28a745; color: white; border: none; border-radius: 5px; font-size: 20px; font-weight: bold; }
+        }
+
+        /* חלונית פרטי לקוח */
+        #contact-modal { display: none; position: fixed; z-index: 100; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); }
+        .modal-content { background: white; margin: 5% auto; padding: 20px; width: 90%; max-width: 500px; border-radius: 10px; }
+        .modal-content input { width: 90%; padding: 12px; margin: 10px 0; border: 2px solid #b08d67; font-size: 18px; text-align: center; }
+        
+        /* כפתור ייצוא - יופיע רק אם המסך גדול (תערוכה) */
+        #export-link { position: fixed; bottom: 0; right: 0; width: 50px; height: 50px; background: transparent; z-index: 999; }
+        @media (max-width: 1200px) { #export-link { display: none !important; } }
+    </style>
+</head>
+<body>
+
+<div id="app-container">
+    <img src="background_design.png" id="bg-image">
+    <img id="img-base" class="layer" src="">
+    <img id="img-mashrabiya" class="layer" src="">
+    <img id="img-profile" class="layer" src="">
+
+    <div id="zone-base" class="touch-zone" style="left: 62.5%; width: 12.7%; height: 6%; top: 8.3%;" onclick="toggleMenu('menu-base')"></div>
+    <div id="zone-light" class="touch-zone" style="left: 47.6%; width: 12.7%; height: 6%; top: 8.3%;" onclick="toggleMenu('menu-light')"></div>
+    <div id="zone-mash" class="touch-zone" style="left: 33%; width: 12.7%; height: 6%; top: 8.3%;" onclick="toggleMenu('menu-mash')"></div>
+    <button id="order-btn" class="touch-zone" style="left: 5%; width: 12.7%; height: 6%; top: 8.3%; display:none;" onclick="openModal()"></button>
+
+    <div id="menu-base" class="dropdown" style="top: 15%; left: 62.5%;"></div>
+    <div id="menu-light" class="dropdown" style="top: 15%; left: 47.6%;"></div>
+    <div id="menu-mash" class="dropdown" style="top: 15%; left: 33%;"></div>
+
+    <div id="price-display" style="top: 8.8%; left: 22%;"></div>
+</div>
+
+<div class="mobile-controls">
+    <button class="mobile-btn" onclick="toggleMenu('menu-base')">בחר בסיס</button>
+    <button class="mobile-btn" onclick="toggleMenu('menu-light')">בחר תאורה</button>
+    <button class="mobile-btn" onclick="toggleMenu('menu-mash')">בחר משרביה</button>
+    <button id="order-btn-mobile" style="display:none;" onclick="openModal()">להזמנה לחץ כאן</button>
+</div>
+
+<div id="contact-modal">
+    <div class="modal-content">
+        <h3>הזנת פרטים למחיר סופי</h3>
+        <input type="text" id="cust-name" placeholder="שם מלא" onfocus="setCurrentInput('cust-name')">
+        <input type="tel" id="cust-phone" placeholder="מספר טלפון" onfocus="setCurrentInput('cust-phone')">
+        <input type="email" id="cust-email" placeholder="אימייל" onfocus="setCurrentInput('cust-email')">
+        <div class="simple-keyboard"></div>
+        <button id="submit-btn" class="mobile-btn" style="background:#28a745; width:100%; margin-top:10px;" onclick="saveLead()">שלח נתונים</button>
+        <button onclick="closeModal()" style="color:red; background:none; border:none; margin-top:10px; cursor:pointer;">ביטול</button>
+    </div>
+</div>
+
+<div id="export-link" onclick="exportLeads()"></div>
+
+<script>
+    let currentPrices = { base: 0, mashrabiya: 0, profile: 0 };
+    let selectedNames = { base: "לא נבחר", mashrabiya: "לא נבחר", profile: "לא נבחר" };
+    const isExhibition = window.innerWidth > 1200;
+    const GOOGLE_SCRIPT_URL = 'https://script.google.com/macros/s/AKfycbz_H8agGkY_0LkD3R5VKgat1v5We7ylVLXw-9Gp2i5tx2RqqicQw-js2SuBEPzvBPxr/exec';
+
+    function init() {
+        if (typeof myProducts === 'undefined') return;
+        myProducts.forEach(p => {
+            const btn = document.createElement('button');
+            btn.innerText = p.name + (p.price > 0 ? ` (${p.price} ₪)` : '');
+            btn.onclick = (e) => {
+                e.stopPropagation();
+                const img = document.getElementById(p.category === 'profile' ? 'img-profile' : (p.category === 'mashrabiya' ? 'img-mashrabiya' : 'img-base'));
+                img.src = p.image; img.style.opacity = "1";
+                currentPrices[p.category] = p.price;
+                selectedNames[p.category] = p.name;
+                updatePrice();
+            };
+            document.getElementById(p.category === 'base' ? 'menu-base' : (p.category === 'profile' ? 'menu-light' : 'menu-mash')).appendChild(btn);
+        });
+    }
+
+    function updatePrice() {
+        const total = currentPrices.base + currentPrices.mashrabiya + currentPrices.profile;
+        if (total > 0) {
+            const txt = total.toLocaleString() + " ₪";
+            document.getElementById('price-display').innerText = txt;
+            document.getElementById('order-btn').style.display = 'block';
+            document.getElementById('order-btn-mobile').style.display = 'block';
+        }
+    }
+
+    function toggleMenu(id) {
+        document.querySelectorAll('.dropdown').forEach(d => d.id === id ? d.classList.toggle('show') : d.classList.remove('show'));
+    }
+
+    function openModal() { document.getElementById('contact-modal').style.display = "block"; }
+    function closeModal() { document.getElementById('contact-modal').style.display = "none"; }
+
+    async function saveLead() {
+        const name = document.getElementById('cust-name').value;
+        const phone = document.getElementById('cust-phone').value;
+        const email = document.getElementById('cust-email').value;
+        if (!name || !phone) { alert("נא למלא שם וטלפון"); return; }
+
+        const data = { 
+            שם: name, טלפון: phone, אימייל: email,
+            בסיס: selectedNames.base, משרביה: selectedNames.mashrabiya, תאורה: selectedNames.profile,
+            מחיר: document.getElementById('price-display').innerText 
+        };
+
+        document.getElementById('submit-btn').innerText = "שולח...";
+        
+        try {
+            await fetch(GOOGLE_SCRIPT_URL, { method: 'POST', mode: 'no-cors', body: JSON.stringify(data) });
+            alert("הנתונים נשלחו בהצלחה!");
+            location.reload();
+        } catch (e) {
+            alert("נשמר מקומית (שגיאת חיבור)");
+        }
+    }
+
+    // מקלדת וירטואלית רק לתערוכה
+    let Keyboard = window.SimpleKeyboard.default;
+    let myKeyboard = new Keyboard({
+        onChange: input => document.getElementById(activeInput).value = input,
+        layout: { 'default': ['1 2 3 4 5 6 7 8 9 0', 'ק ר א ט ו ן ם פ {bksp}', 'ש ד ג כ ע י ח ל ך ף', 'ז ס ב ה נ מ צ ת ץ', '{space}'], 'english': ['q w e r t y u i o p {bksp}', 'a s d f g h j k l', 'z x c v b n m . @', '{space}'], 'numeric': ['1 2 3', '4 5 6', '7 8 9', '+ 0 {bksp}'] },
+        display: { '{bksp}': 'מחק', '{space}': 'רווח' }
+    });
+    if (!isExhibition) document.querySelector(".simple-keyboard").style.display = "none";
+
+    function setCurrentInput(id) {
+        activeInput = id;
+        if (!isExhibition) return;
+        if (id === 'cust-email') myKeyboard.setOptions({ layoutName: 'english' });
+        else if (id === 'cust-phone') myKeyboard.setOptions({ layoutName: 'numeric' });
+        else myKeyboard.setOptions({ layoutName: 'default' });
+    }
+
+    window.onclick = (e) => { if (!e.target.closest('.dropdown') && !e.target.closest('.touch-zone') && !e.target.closest('.mobile-btn')) document.querySelectorAll('.dropdown').forEach(d => d.classList.remove('show')); };
+    window.onload = init;
+</script>
+</body>
+</html>
