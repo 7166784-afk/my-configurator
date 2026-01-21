@@ -15,7 +15,7 @@ const myProducts = [
   { category: 'base', name: 'דגם 13', image: 'base13.png', price: 9500 },
   { category: 'base', name: 'דגם 14', image: 'base14.png', price: 9500 },
   { category: 'base', name: 'דגם 15', image: 'base15.png', price: 9500 },
-
+  { category: 'base', name: 'דגם 16', image: 'base16.png', price: 9500 },
     // קטגוריית משרביה
  { category: 'mashrabiya', name: 'משרביה דגם 1', image: 'mash1.png', price: 0 },
   { category: 'mashrabiya', name: 'משרביה דגם 2', image: 'mash2.png', price: 0 },
