@@ -29,6 +29,17 @@ const myProducts = [
   { category: 'mashrabiya', name: 'משרביה דגם 10', image: 'mash10.png', price: 2000 },
   { category: 'mashrabiya', name: 'משרביה דגם 11', image: 'mash11.png', price: 2000 },
   { category: 'mashrabiya', name: 'משרביה דגם 12', image: 'mash12.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 1', image: 'mash51.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 2', image: 'mash52.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 3', image: 'mash53.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 4', image: 'mash54.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 5', image: 'mash55.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 6', image: 'mash56.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 7', image: 'mash57.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 8', image: 'mash58.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 9', image: 'mash59.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 10', image: 'mash60.png', price: 2000 },
+  { category: 'mashrabiya', name: 'משרביה נברשת 11', image: 'mash61.png', price: 2000 },
 
     // קטגוריית תאורה
 
