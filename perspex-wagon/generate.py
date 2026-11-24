@@ -28,12 +28,11 @@ D = 60.0         # overall depth
 WI = W - 2 * T   # interior width = 87
 ZB = D - 2 * T   # back panel front face (back panel inset 4 mm from rear edge) = 52
 
-Y_BOTTOM, Y_MIDDLE, Y_UPPER, Y_TOP = 4.0, 40.0, 72.0, 96.0   # shelf bottom faces
+Y_BOTTOM, Y_MIDDLE, Y_UPPER, Y_TOP = 0.0, 40.0, 72.0, 96.0   # shelf bottom faces
 X_PART = 48.0                    # partition left face (drawer opening = 0..48)
 PLAT_W = X_PART + 2 * T          # top platform width = 56
-Y_OXY = [12.0, 46.0, 80.0]       # oxygen-side shelves (bottom faces)
+Y_OXY = [8.0, 46.0, 80.0]       # oxygen-side shelves (bottom faces)
 OXY_OUT, OXY_DEPTH = 28.0, 26.0  # oxygen shelf size (outward x depth)
-Z_RIB = OXY_DEPTH                # rib behind the oxygen shelves, z = 26..30
 
 # drawer
 DW, DD = 47.0, 51.0              # drawer outer width / depth
@@ -87,14 +86,10 @@ parts = []
 SHELF_DEPTH = ZB                         # 52
 SIDE_TABS_Z = [(8, 20), (32, 44)]        # shelf tabs into side panels (z ranges)
 BACK_TABS_X_FULL = [(12, 28), (59, 75)]  # shelf tabs into back panel (x ranges)
-BACK_TABS_X_PLAT = [(10, 22), (30, 42)]  # platform tabs into back panel
-PART_TABS_Z = [(10, 20), (32, 42)]       # partition tabs into upper shelf / platform
+PART_TABS_Z = [(10, 20), (32, 42)]       # partition tabs into upper shelf
 BACKPANEL_TABS_Y = [(20, 32), (52, 62), (80, 90)]   # back panel tabs into sides
 PART_BACK_TAB_Y = (Y_UPPER + T + 5, Y_TOP - 5)       # partition tab into back panel
 OXY_TAB_Z = (5, 21)
-RIB_TABS_Y = [(26, 38), (58, 70)]
-OXY_RIB_TAB_X = (6, 18)                  # distance outward from side panel outer face
-RIB_Y0, RIB_Y1 = Y_OXY[0] - 4, Y_OXY[-1] + T + 8
 
 # ---------------------------------------------------------------- side panels (local u=z, v=y)
 def side_panel(left):
@@ -102,7 +97,7 @@ def side_panel(left):
     p = rounded_corner_cut(p, 0, 0, 3, 1, 1)
     p = rounded_corner_cut(p, D, 0, 3, -1, 1)
     cuts = []
-    shelves = [Y_BOTTOM, Y_MIDDLE, Y_UPPER] + ([Y_TOP] if left else [])
+    shelves = [Y_BOTTOM, Y_MIDDLE, Y_UPPER]   # bottom shelf slots are open notches (flush bottom)
     for ys in shelves:
         for z0, z1 in SIDE_TABS_Z:
             cuts.append(slot(z0, ys, z1, ys + T))
@@ -111,8 +106,6 @@ def side_panel(left):
     if left:
         for yo in Y_OXY:
             cuts.append(slot(OXY_TAB_Z[0], yo, OXY_TAB_Z[1], yo + T))
-        for y0, y1 in RIB_TABS_Y:
-            cuts.append(slot(Z_RIB, y0, Z_RIB + T, y1))
     return p.difference(unary_union(cuts))
 
 # placement: local (u,v,w) -> world. axes given as world vectors, origin world point.
@@ -134,8 +127,6 @@ def back_panel():
     for ys in [Y_BOTTOM, Y_MIDDLE, Y_UPPER]:
         for x0, x1 in BACK_TABS_X_FULL:
             cuts.append(slot(x0, ys, x1, ys + T))
-    for x0, x1 in BACK_TABS_X_PLAT:
-        cuts.append(slot(x0, Y_TOP, x1, Y_TOP + T))
     cuts.append(slot(X_PART, PART_BACK_TAB_Y[0], X_PART + T, PART_BACK_TAB_Y[1]))
     return p.difference(unary_union(cuts))
 
@@ -163,9 +154,9 @@ mid_cut = rounded_corner_cut(mid_cut, MID_CUT_X0, MID_CUT_DEPTH, 16, 1, -1)
 mid_cut = rounded_corner_cut(mid_cut, MID_CUT_X1, MID_CUT_DEPTH, 4, -1, -1)
 middle = shelf(WI).difference(mid_cut)
 upper = shelf(WI).difference(unary_union([slot(X_PART, z0, X_PART + T, z1) for z0, z1 in PART_TABS_Z]))
-plat = shelf(PLAT_W, right_tab=False, back_tabs=BACK_TABS_X_PLAT)
+# top platform: plain board, no tabs - glued onto the side, back panel and partition
+plat = rect(0, 0, PLAT_W, SHELF_DEPTH)
 plat = rounded_corner_cut(plat, PLAT_W, 0, 4, -1, 1)
-plat = plat.difference(unary_union([slot(X_PART, z0, X_PART + T, z1) for z0, z1 in PART_TABS_Z]))
 
 # horizontal parts: local u -> X, local v -> Z, extrusion -> Y
 parts.append(Part("Bottom shelf", "D", bottom, place(0, Y_BOTTOM, 0, EX, EZ, EY)))
@@ -178,7 +169,7 @@ y_lo, y_hi = Y_UPPER + T, Y_TOP
 part = rect(0, y_lo, SHELF_DEPTH, y_hi)
 ptabs = []
 for z0, z1 in PART_TABS_Z:
-    ptabs += [rect(z0, y_lo - T, z1, y_lo), rect(z0, y_hi, z1, y_hi + T)]
+    ptabs.append(rect(z0, y_lo - T, z1, y_lo))   # top edge is flat: platform is glued on
 ptabs.append(rect(SHELF_DEPTH, PART_BACK_TAB_Y[0], SHELF_DEPTH + T, PART_BACK_TAB_Y[1]))
 part = unary_union([part] + ptabs)
 parts.append(Part("Drawer partition", "H", part, place(X_PART, 0, 0, EZ, EY, EX)))
@@ -188,8 +179,7 @@ parts.append(Part("Drawer partition", "H", part, place(X_PART, 0, 0, EZ, EY, EX)
 def oxy_shelf(hole):
     p = rect(0, 0, OXY_OUT, OXY_DEPTH)
     p = rounded_corner_cut(p, OXY_OUT, 0, 6, -1, 1)
-    p = unary_union([p, rect(-T, OXY_TAB_Z[0], 0, OXY_TAB_Z[1]),
-                     rect(OXY_RIB_TAB_X[0], OXY_DEPTH, OXY_RIB_TAB_X[1], OXY_DEPTH + T)])
+    p = unary_union([p, rect(-T, OXY_TAB_Z[0], 0, OXY_TAB_Z[1])])
     if hole:
         p = p.difference(Point(OXY_OUT / 2 + 1, OXY_DEPTH / 2 - 1).buffer(7, 64))
     return p
@@ -198,12 +188,6 @@ for i, yo in enumerate(Y_OXY):
     parts.append(Part(f"Cylinder shelf {i+1}", f"J{i+1}", oxy_shelf(hole=(i > 0)),
                       place(-T, yo, 0, (-1, 0, 0), EZ, EY)))
 
-rib = rect(0, RIB_Y0, OXY_OUT - 6, RIB_Y1)
-rib = rounded_corner_cut(rib, OXY_OUT - 6, RIB_Y0, 5, -1, 1)
-rib = rounded_corner_cut(rib, OXY_OUT - 6, RIB_Y1, 5, -1, -1)
-rib = unary_union([rib] + [rect(-T, y0, 0, y1) for y0, y1 in RIB_TABS_Y])
-rib = rib.difference(unary_union([slot(OXY_RIB_TAB_X[0], yo, OXY_RIB_TAB_X[1], yo + T) for yo in Y_OXY]))
-parts.append(Part("Cylinder rib", "K", rib, place(-T, 0, Z_RIB, (-1, 0, 0), EY, EZ)))
 
 # ---------------------------------------------------------------- drawer
 DS_TAB_Y = (8.0, 12.0)                    # side wall end tabs into front/back
@@ -339,7 +323,7 @@ def write_preview(meshes):
     R = R2 @ R1
     light = np.array([-0.4, 0.7, 0.6]); light /= np.linalg.norm(light)
     colors = {"A": (150, 190, 230), "B": (150, 190, 230), "C": (150, 190, 230), "H": (150, 190, 230),
-              "K": (150, 190, 230)}
+              }
     polys = []
     for p, m in zip(parts, meshes):
         base = colors.get(p.label, (110, 160, 120) if p.label[0] in "DEFGJ" else (175, 205, 240))
