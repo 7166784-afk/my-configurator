@@ -27,18 +27,17 @@ W = 95.0         # overall width (outside of side panels)
 D = 60.0         # overall depth
 WI = W - 2 * T   # interior width = 87
 ZB = D - 2 * T   # back panel front face (back panel inset 4 mm from rear edge) = 52
-FOOT = 6.0       # leg clearance cut-out height
 
-Y_BOTTOM, Y_MIDDLE, Y_UPPER, Y_TOP = 10.0, 40.0, 68.0, 94.0   # shelf bottom faces
+Y_BOTTOM, Y_MIDDLE, Y_UPPER, Y_TOP = 4.0, 40.0, 72.0, 96.0   # shelf bottom faces
 X_PART = 48.0                    # partition left face (drawer opening = 0..48)
 PLAT_W = X_PART + 2 * T          # top platform width = 56
-Y_OXY = [18.0, 48.0, 78.0]       # oxygen-side shelves (bottom faces)
+Y_OXY = [12.0, 46.0, 80.0]       # oxygen-side shelves (bottom faces)
 OXY_OUT, OXY_DEPTH = 28.0, 26.0  # oxygen shelf size (outward x depth)
 Z_RIB = OXY_DEPTH                # rib behind the oxygen shelves, z = 26..30
 
 # drawer
 DW, DD = 47.0, 51.0              # drawer outer width / depth
-D_FRONT_H, D_WALL_H = 21.0, 17.0
+D_FRONT_H, D_WALL_H = 19.0, 15.0
 D_X0 = 0.5                       # drawer left gap
 D_SIDE_X = [3.0, DW - 3.0 - T]   # drawer side walls x (drawer-local)
 D_BOT_Y = 3.0                    # drawer bottom height (drawer-local)
@@ -99,10 +98,9 @@ RIB_Y0, RIB_Y1 = Y_OXY[0] - 4, Y_OXY[-1] + T + 8
 
 # ---------------------------------------------------------------- side panels (local u=z, v=y)
 def side_panel(left):
-    p = unary_union([rect(0, 0, D, H - 6), scallop_top(0, D, H - 6, 2, 6)])
+    p = unary_union([rect(0, 0, D, H - 6), scallop_top(0, D, H - 6, 3, 6)])
     p = rounded_corner_cut(p, 0, 0, 3, 1, 1)
     p = rounded_corner_cut(p, D, 0, 3, -1, 1)
-    p = p.difference(rect(8, -1, D - 8, FOOT))                 # legs
     cuts = []
     shelves = [Y_BOTTOM, Y_MIDDLE, Y_UPPER] + ([Y_TOP] if left else [])
     for ys in shelves:
@@ -127,7 +125,7 @@ parts.append(Part("Right side", "B", side_panel(False), place(WI, 0, 0, EZ, EY, 
 
 # ---------------------------------------------------------------- back panel (local u=x, v=y)
 def back_panel():
-    p = unary_union([rect(0, 6, WI, H - 6), scallop_top(0, WI, H - 6, 3, 6)])
+    p = unary_union([rect(0, 0, WI, H - 6), scallop_top(0, WI, H - 6, 4, 6)])
     tabs = []
     for y0, y1 in BACKPANEL_TABS_Y:
         tabs += [rect(-T, y0, 0, y1), rect(WI, y0, WI + T, y1)]
@@ -157,7 +155,13 @@ def shelf(width, left_tab=True, right_tab=True, back_tabs=BACK_TABS_X_FULL):
     return unary_union([p] + tabs)
 
 bottom = shelf(WI)
-middle = shelf(WI).difference(Point(WI * 0.62, 0).buffer(13, 64))   # tube cut-out, as in the photo
+# big front cut-out on the left of the middle shelf, as in the photo:
+# from x=6 to x=40, 28 mm deep, large round corner on the left, small one on the right
+MID_CUT_X0, MID_CUT_X1, MID_CUT_DEPTH = 6.0, 40.0, 28.0
+mid_cut = rect(MID_CUT_X0, -1, MID_CUT_X1, MID_CUT_DEPTH)
+mid_cut = rounded_corner_cut(mid_cut, MID_CUT_X0, MID_CUT_DEPTH, 16, 1, -1)
+mid_cut = rounded_corner_cut(mid_cut, MID_CUT_X1, MID_CUT_DEPTH, 4, -1, -1)
+middle = shelf(WI).difference(mid_cut)
 upper = shelf(WI).difference(unary_union([slot(X_PART, z0, X_PART + T, z1) for z0, z1 in PART_TABS_Z]))
 plat = shelf(PLAT_W, right_tab=False, back_tabs=BACK_TABS_X_PLAT)
 plat = rounded_corner_cut(plat, PLAT_W, 0, 4, -1, 1)
@@ -202,7 +206,7 @@ rib = rib.difference(unary_union([slot(OXY_RIB_TAB_X[0], yo, OXY_RIB_TAB_X[1], y
 parts.append(Part("Cylinder rib", "K", rib, place(-T, 0, Z_RIB, (-1, 0, 0), EY, EZ)))
 
 # ---------------------------------------------------------------- drawer
-DS_TAB_Y = (8.0, 13.0)                    # side wall end tabs into front/back
+DS_TAB_Y = (8.0, 12.0)                    # side wall end tabs into front/back
 DB_X = (D_SIDE_X[0] + T, D_SIDE_X[1])     # bottom between side walls: 7..40
 DB_Z = (T, DD - T)                        # bottom between front/back: 4..47
 DB_TABS_X = [(12, 20), (27, 35)]          # bottom tabs into front/back walls
